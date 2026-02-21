@@ -20,7 +20,7 @@ const requiredEnvVars = [
 
 requiredEnvVars.forEach((key) => {
   if (!process.env[key]) {
-    console.error(`❌ ${key} is missing in .env`);
+    console.error(`❌ ${key} is missing in environment variables`);
     process.exit(1);
   }
 });
@@ -35,7 +35,7 @@ app.use(helmet());
 // Rate limiting
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
@@ -46,18 +46,29 @@ app.use(
    CORS CONFIGURATION
 ========================= */
 
+// Allow local + all Vercel deployments
 const allowedOrigins = [
-  "http://localhost:5173", // Local frontend
+  "http://localhost:5173",
+  "http://localhost:3000"
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
+      // Allow requests with no origin (Postman, mobile apps)
+      if (!origin) return callback(null, true);
+
+      // Allow localhost
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
       }
+
+      // Allow ANY vercel deployment
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      callback(new Error("CORS not allowed"));
     },
     credentials: true,
   })
@@ -75,9 +86,7 @@ app.use(express.json({ limit: "10kb" }));
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected Successfully");
-  })
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch((err) => {
     console.error("❌ MongoDB Connection Error:", err.message);
     process.exit(1);
