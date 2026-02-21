@@ -2,24 +2,41 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL; // 🔥 Uses Vercel env variable
+
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
+    if (!email || !password) {
+      return alert("Please fill all fields");
+    }
+
     try {
-      await axios.post("http://localhost:5000/api/register", {
-        email,
-        password,
-      });
+      setLoading(true);
+
+      await axios.post(
+        `${API}/register`,
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       alert("Account created successfully!");
-      navigate("/");
+      navigate("/"); // go to login
     } catch (err) {
+      console.error("Register Error:", err.response?.data || err.message);
       alert("Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,6 +54,7 @@ function Register() {
           type="email"
           placeholder="Email"
           className="w-full p-3 mb-4 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -44,11 +62,15 @@ function Register() {
           type="password"
           placeholder="Password"
           className="w-full p-3 mb-6 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-cyan-500 py-3 rounded-lg hover:bg-cyan-600 transition font-semibold">
-          Register
+        <button
+          disabled={loading}
+          className="w-full bg-cyan-500 py-3 rounded-lg hover:bg-cyan-600 transition font-semibold disabled:opacity-50"
+        >
+          {loading ? "Creating..." : "Register"}
         </button>
 
         <p className="mt-4 text-center text-sm text-slate-400">

@@ -2,24 +2,43 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL; // 🔥 Production API
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    try {
-      const res = await axios.post("http://localhost:5000/api/login", {
-        email,
-        password,
-      });
+    if (!email || !password) {
+      return alert("Please fill all fields");
+    }
 
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${API}/login`,
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Save token
       localStorage.setItem("token", res.data.token);
+
       navigate("/dashboard");
     } catch (err) {
+      console.error("Login Error:", err.response?.data || err.message);
       alert("Invalid credentials");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,6 +56,7 @@ function Login() {
           type="email"
           placeholder="Email"
           className="w-full p-3 mb-4 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -44,11 +64,15 @@ function Login() {
           type="password"
           placeholder="Password"
           className="w-full p-3 mb-6 rounded-lg bg-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-purple-600 py-3 rounded-lg hover:bg-purple-700 transition font-semibold">
-          Login
+        <button
+          disabled={loading}
+          className="w-full bg-purple-600 py-3 rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50"
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p className="mt-4 text-center text-sm text-slate-400">
