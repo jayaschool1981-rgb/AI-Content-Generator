@@ -9,7 +9,7 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("token");
 
-  const API = "http://localhost:5000/api";
+  const API = "https://ai-content-generator-1q4k.onrender.com/";
 
   // 🔥 Fetch campaigns on load
   const fetchCampaigns = async () => {
